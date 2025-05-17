@@ -2,7 +2,7 @@ def stream_users():
     connection = mysql.connector.connect(
         host="localhost",
         user="Damaris",
-        password="Dama@5323",
+        password=".......",
         database="ALX_prodev"
     )
     cursor = connection.cursor(dictionary=True)
