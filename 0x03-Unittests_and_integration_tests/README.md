@@ -7,10 +7,8 @@ This project demonstrates how to implement unit tests and integration tests in P
 The project contains tests for utility functions and a GitHub client implementation, showcasing various testing techniques:
 
 1. **Parameterized testing**: Using the `parameterized` package to run the same test with different inputs
-2. **Mocking**: Using `unittest.mock` to isolate code from external dependencies 
-3. **Patching**: Replacing functions/methods/properties during testing
-4. **Fixtures**: Using test fixtures for consistent test data
-5. **Integration tests**: Testing components working together while mocking external systems
+
+2. **Integration tests**: Testing components working together while mocking external systems
 
 ## Files Structure
 
