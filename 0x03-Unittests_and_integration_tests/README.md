@@ -1,6 +1,6 @@
 # Python Unit Testing Utilities
 
-[![Tests](https://github.com/yourusername/python-unittest-utils/actions/workflows/tests.yml/badge.svg)](https://github.com/yourusername/python-unittest-utils/actions/workflows/tests.yml)
+[![Tests](https://github.com/dama5323/python-unittest-utils/actions/workflows/tests.yml/badge.svg)](https://github.com/yourusername/python-unittest-utils/actions/workflows/tests.yml)
 
 A collection of utility functions with comprehensive unit tests demonstrating Python testing best practices.
 
