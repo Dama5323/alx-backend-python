@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Unit tests for utils.access_nested_map"""
+
 import unittest
 from parameterized import parameterized
 from utils import access_nested_map
@@ -7,7 +8,6 @@ from unittest.mock import patch, Mock
 from typing import Dict
 from utils import get_json
 from utils import memoize
-
 
 
 class TestAccessNestedMap(unittest.TestCase):
@@ -32,6 +32,7 @@ class TestAccessNestedMap(unittest.TestCase):
             access_nested_map(nested_map, path)
         self.assertEqual(str(context.exception), f"'{expected_key}'")
 
+
 class TestGetJson(unittest.TestCase):
     """Test class for get_json function."""
 
@@ -41,7 +42,7 @@ class TestGetJson(unittest.TestCase):
     ])
     def test_get_json(self, test_url: str, test_payload: Dict) -> None:
         """Test get_json returns expected result without making HTTP calls.
-        
+
         Args:
             test_url: URL to mock
             test_payload: Expected JSON response
@@ -78,7 +79,7 @@ class TestMemoize(unittest.TestCase):
 
         # Create instance and mock a_method
         test_instance = TestClass()
-        
+
         with patch.object(test_instance, 'a_method') as mock_method:
             mock_method.return_value = 42  # Set return value
 
@@ -88,10 +89,7 @@ class TestMemoize(unittest.TestCase):
 
             # Second call - should use cached value
             result2 = test_instance.a_property
-            self.assertEqual(result2, 42)            
-        
-
-
+            self.assertEqual(result2, 42)
 
 
 if __name__ == '__main__':
