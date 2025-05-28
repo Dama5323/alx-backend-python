@@ -6,6 +6,8 @@ from utils import access_nested_map
 from unittest.mock import patch, Mock
 from typing import Dict
 from utils import get_json
+from utils import memoize
+
 
 
 class TestAccessNestedMap(unittest.TestCase):
@@ -58,6 +60,35 @@ class TestGetJson(unittest.TestCase):
 
             # Assert we got the expected payload
             self.assertEqual(result, test_payload)
+
+
+class TestMemoize(unittest.TestCase):
+    """Test class for memoize decorator."""
+
+    def test_memoize(self):
+        """Test that memoize caches the result properly."""
+        # Define the test class inside the test method
+        class TestClass:
+            def a_method(self):
+                return 42
+
+            @memoize
+            def a_property(self):
+                return self.a_method()
+
+        # Create instance and mock a_method
+        test_instance = TestClass()
+        
+        with patch.object(test_instance, 'a_method') as mock_method:
+            mock_method.return_value = 42  # Set return value
+
+            # First call - should call a_method
+            result1 = test_instance.a_property
+            self.assertEqual(result1, 42)
+
+            # Second call - should use cached value
+            result2 = test_instance.a_property
+            self.assertEqual(result2, 42)            
         
 
 
