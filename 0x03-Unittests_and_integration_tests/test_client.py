@@ -24,7 +24,7 @@ class TestGithubOrgClient(unittest.TestCase):
             "repos_url": f"https://api.github.com/orgs/{org_name}/repos"
         }
         mock_get_json.return_value = expected_response
-        
+
         result = client.org
         mock_get_json.assert_called_once_with(
             f"https://api.github.com/orgs/{org_name}"
@@ -95,7 +95,10 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
                 mock_response.json.return_value = cls.repos_payload
             return mock_response
 
-        cls.get_patcher = patch('requests.get', side_effect=get_json_side_effect)
+        cls.get_patcher = patch(
+            'requests.get',
+            side_effect=get_json_side_effect
+        )
         cls.get_patcher.start()
 
     @classmethod
@@ -118,4 +121,3 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    
