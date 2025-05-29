@@ -65,5 +65,51 @@ class TestGithubOrgClient(unittest.TestCase):
             # Verify we got the expected URL
             self.assertEqual(result, test_payload["repos_url"])
 
+    @patch('client.get_json')
+    def test_public_repos(self, mock_get_json):
+        """Test public_repos returns correct repos and applies license filter"""
+        # Test payload for repos
+        test_repos_payload = [
+            {"name": "repo1", "license": {"key": "mit"}},
+            {"name": "repo2", "license": {"key": "apache-2.0"}},
+            {"name": "repo3", "license": None}
+        ]
+        
+        # Configure mock return values
+        mock_get_json.return_value = test_repos_payload
+        test_url = "https://fake.url/repos"
+
+        # Create client instance
+        client = GithubOrgClient("test-org")
+
+        # Patch _public_repos_url as context manager
+        with patch.object(
+            GithubOrgClient,
+            '_public_repos_url',
+            new_callable=PropertyMock,
+            return_value=test_url
+        ) as mock_public_repos_url:
+            # Test without license filter
+            repos = client.public_repos()
+            
+            # Verify mocks were called
+            mock_public_repos_url.assert_called_once()
+            mock_get_json.assert_called_once_with(test_url)
+            
+            # Verify correct repos returned
+            self.assertEqual(repos, ["repo1", "repo2", "repo3"])
+
+            # Reset mock call counts
+            mock_get_json.reset_mock()
+
+            # Test with license filter
+            repos = client.public_repos(license="mit")
+            
+            # Verify get_json wasn't called again (memoized)
+            mock_get_json.assert_not_called()
+            
+            # Verify filtered repos
+            self.assertEqual(repos, ["repo1"])
+
       
     
