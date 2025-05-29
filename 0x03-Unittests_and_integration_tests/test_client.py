@@ -18,13 +18,13 @@ class TestGithubOrgClient(unittest.TestCase):
         """Test that GithubOrgClient.org returns the correct value"""
         expected_response = {
             "name": org_name,
-            "repos_url": f"https://api.github.com/orgs/{org_name}/repos"
+            "repos_url": (
+                f"https://api.github.com/orgs/{org_name}/repos"
+            )
         }
         mock_get_json.return_value = expected_response
-        
         client = GithubOrgClient(org_name)
         result = client.org
-        
         url = f"https://api.github.com/orgs/{org_name}"
         mock_get_json.assert_called_once_with(url)
         self.assertEqual(result, expected_response)
@@ -55,10 +55,9 @@ class TestGithubOrgClient(unittest.TestCase):
             {"name": "repo2", "license": {"key": "apache-2.0"}},
             {"name": "repo3", "license": None}
         ]
-        
+
         mock_get_json.return_value = test_repos_payload
         test_url = "https://fake.url/repos"
-
         client = GithubOrgClient("test-org")
 
         with patch.object(
@@ -76,3 +75,4 @@ class TestGithubOrgClient(unittest.TestCase):
             repos = client.public_repos(license="mit")
             mock_get_json.assert_not_called()
             self.assertEqual(repos, ["repo1"])
+
