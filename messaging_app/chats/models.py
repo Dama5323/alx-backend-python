@@ -5,15 +5,31 @@ import uuid
 from django.core.validators import RegexValidator
 
 class User(AbstractUser):
-    # Add primary key as UUID
+    # Add these to resolve reverse accessor clashes
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        related_name="custom_user_set",
+        related_query_name="user",
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        related_name="custom_user_set",
+        related_query_name="user",
+    )
+
+    # Primary key
     user_id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
         editable=False,
         unique=True
     )
-    
-    # Password field is already included in AbstractUser
     
     # Personal Info
     profile_picture = models.ImageField(
@@ -45,7 +61,7 @@ class User(AbstractUser):
     
     def __str__(self):
         return f"{self.username} ({self.user_id})"
-
+    
 class Conversation(models.Model):
     conversation_id = models.UUIDField(
         primary_key=True,
