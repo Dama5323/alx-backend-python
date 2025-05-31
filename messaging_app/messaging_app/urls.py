@@ -16,9 +16,9 @@ Including another URLconf
 """
 # messaging_app/urls.py
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include  # ✅ include is required
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('chats.urls')),  # ✅ This line is key
+    path('api/', include('chats.urls')),  # ✅ Add this line to include your API endpoints
 ]
