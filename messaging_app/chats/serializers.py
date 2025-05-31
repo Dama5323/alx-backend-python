@@ -1,107 +1,91 @@
-# chats/serializers.py
+
 from rest_framework import serializers
-from .models import User, Conversation, Message
-from django.core.exceptions import ValidationError as DjangoValidationError
+from .models import CustomUser, Conversation, Message
 from rest_framework.exceptions import ValidationError
-
+from rest_framework.serializers import ValidationError
+# --- USER SERIALIZER ---
 class UserSerializer(serializers.ModelSerializer):
-    # Adding requested CharField example
-    full_name = serializers.CharField(
-        source='get_full_name',
-        read_only=True,
-        help_text="User's full name"
-    )
-    
+    phone_number = serializers.CharField(required=False)
+
     class Meta:
-        model = User
-        fields = [
-            'user_id',
-            'email',
-            'first_name',
-            'last_name',
-            'full_name',  # Added CharField example
-            'profile_picture',
-            'online_status',
-            'last_seen',
-            'phone_number',
-            'bio'
-        ]
-        extra_kwargs = {
-            'password': {'write_only': True},
-            'profile_picture': {'required': False}
-        }
+        model = CustomUser
+        fields = ['user_id', 'email', 'first_name', 'last_name', 'phone_number']
 
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise ValidationError("A user with this email already exists.")
-        return value
-
+# --- MESSAGE SERIALIZER ---
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
-    # Adding SerializerMethodField example
-    message_preview = serializers.SerializerMethodField(
-        help_text="First 50 characters of message"
-    )
-    
+
     class Meta:
         model = Message
-        fields = [
-            'message_id',
-            'sender',
-            'message_body',
-            'message_preview',  # Added SerializerMethodField
-            'sent_at',
-            'is_read'
-        ]
-        read_only_fields = ['sent_at', 'sender']
+        fields = ['message_id', 'conversation', 'sender', 'message_body', 'sent_at']
+        read_only_fields = ['sender', 'sent_at']
 
-    def get_message_preview(self, obj):
-        return obj.message_body[:50] + '...' if len(obj.message_body) > 50 else obj.message_body
+# --- NESTED MESSAGE SERIALIZER (for conversation) ---
+class NestedMessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
 
+    class Meta:
+        model = Message
+        fields = ['message_id', 'sender', 'message_body', 'sent_at']
+# --- CONVERSATION SERIALIZER WITH MESSAGES + CUSTOM FIELD ---
 class ConversationSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
-    messages = MessageSerializer(many=True, read_only=True)
-    # Adding another SerializerMethodField example
-    participant_count = serializers.SerializerMethodField(
-        help_text="Number of participants in conversation"
-    )
-    
+    messages = NestedMessageSerializer(many=True, read_only=True, source='messages')
+    latest_message = serializers.SerializerMethodField()
+
     class Meta:
         model = Conversation
-        fields = [
-            'conversation_id',
-            'participants',
-            'participant_count',  # Added SerializerMethodField
-            'created_at',
-            'updated_at',
-            'messages'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
+        fields = ['conversation_id', 'participants', 'created_at', 'latest_message', 'messages']
 
-    def get_participant_count(self, obj):
-        return obj.participants.count()
+    def get_latest_message(self, obj):
+        latest = obj.messages.order_by('-sent_at').first()
+        return NestedMessageSerializer(latest).data if latest else None
 
-    def validate(self, data):
-        if 'participants' in data and len(data['participants']) < 2:
-            raise ValidationError("A conversation must have at least 2 participants")
-        return data
 
+# --- CONVERSATION CREATE SERIALIZER (with validation) ---
 class ConversationCreateSerializer(serializers.ModelSerializer):
     participants = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=User.objects.all(),
-        write_only=True
+        queryset=CustomUser.objects.all()
     )
-    
+
     class Meta:
         model = Conversation
         fields = ['conversation_id', 'participants']
 
+    def validate_participants(self, value):
+        if len(value) < 2:
+            raise ValidationError("A conversation must include at least two participants.")
+        return value
+
     def create(self, validated_data):
-        try:
-            participants = validated_data.pop('participants')
-            conversation = Conversation.objects.create(**validated_data)
-            conversation.participants.set(participants)
-            return conversation
-        except DjangoValidationError as e:
-            raise ValidationError(str(e))
+        participants = validated_data.pop('participants')
+        conversation = Conversation.objects.create(**validated_data)
+        conversation.participants.set(participants)
+        return conversation
+# --- MESSAGE CREATE SERIALIZER ---
+class ConversationCreateSerializer(serializers.ModelSerializer):
+    participants = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=CustomUser.objects.all()
+    )
+
+    class Meta:
+        model = Conversation
+        fields = ['conversation_id', 'participants']
+
+    def validate_participants(self, value):
+        if len(value) < 2:
+            raise ValidationError("A conversation must include at least two participants.")
+        return value
+
+    def create(self, validated_data):
+        participants = validated_data.pop('participants')
+        
+        # Optional: Check for existing conversation with same participants
+        # if Conversation.objects.filter(participants__in=participants).distinct().count() == len(participants):
+        #     raise ValidationError("A conversation with these participants already exists.")
+        
+        conversation = Conversation.objects.create()
+        conversation.participants.set(participants)
+        return conversation
