@@ -4,6 +4,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action  
 
 from .models import Conversation, Message
 from .filters import MessageFilter
@@ -27,7 +28,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
     ordering_fields = ['updated_at']
     ordering = ['-updated_at']
     lookup_field = 'conversation_id'
-
+    serializer_class = ConversationSerializer
+    
     def get_serializer_class(self):
         if self.action == 'create':
             return ConversationCreateSerializer
@@ -40,16 +42,26 @@ class ConversationViewSet(viewsets.ModelViewSet):
         conversation = serializer.save()
         conversation.participants.add(self.request.user)
 
-    def retrieve(self, request, conversation_id=None):
-        conversation = get_object_or_404(
-            Conversation,
-            id=conversation_id,
-            participants=request.user
-        )
-        serializer = self.get_serializer(conversation)
-        return Response(serializer.data)
-
-
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.check_object_permissions(request, instance)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except Exception:
+            return Response(
+                {"detail": "Not found or permission denied"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+    @action(detail=True, methods=['put', 'patch'])
+    def update_conversation(self, request, conversation_id=None):
+        conversation = get_object_or_404(Conversation, id=conversation_id)
+        if not conversation.participants.filter(id=request.user.id).exists():
+            return Response(
+                {"detail": "You are not a participant of this conversation"},
+                status=status.HTTP_403_FORBIDDEN
+            )
 class MessageViewSet(viewsets.ModelViewSet):
     """
     ViewSet for handling Messages with JWT authentication.
@@ -76,3 +88,21 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            if not (instance.conversation.participants.filter(id=request.user.id).exists() and 
+                   instance.sender == request.user):
+                return Response(
+                    {"detail": "You can only delete your own messages"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception:
+            return Response(
+                {"detail": "Message not found or permission denied"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
