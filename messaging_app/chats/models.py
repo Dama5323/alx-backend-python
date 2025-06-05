@@ -4,6 +4,7 @@ from django.db import models
 import uuid
 from django.core.validators import RegexValidator, EmailValidator
 
+
 class User(AbstractUser):
     # Explicitly include all required fields
     user_id = models.UUIDField(

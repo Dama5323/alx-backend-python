@@ -1,31 +1,36 @@
+# chats/serializers.py
+
 from rest_framework import serializers
-from .models import User, Conversation, Message  # Assuming you renamed CustomUser to User
+from .models import User, Conversation, Message
 
+# 1. User Serializer
 class UserSerializer(serializers.ModelSerializer):
-    phone_number = serializers.CharField(required=False)
-
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number']
+        fields = ['id', 'username', 'email']
+        read_only_fields = ['id']
 
 
-class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
-
-    class Meta:
-        model = Message
-        fields = ['message_id', 'conversation', 'sender', 'message_body', 'sent_at']
-        read_only_fields = ['sender', 'sent_at']
-
-
+# 2. Nested Message Serializer for Conversations
 class NestedMessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
 
     class Meta:
         model = Message
-        fields = ['message_id', 'sender', 'message_body', 'sent_at']
+        fields = ['id', 'sender', 'message_body', 'sent_at']
 
 
+# 3. Full Message Serializer for Message views
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ['id', 'conversation', 'sender', 'message_body', 'sent_at']
+        read_only_fields = ['sender', 'sent_at']
+
+
+# 4. Conversation Serializer with nested users/messages + latest message
 class ConversationSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
     messages = NestedMessageSerializer(many=True, read_only=True)
@@ -33,13 +38,14 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants', 'created_at', 'latest_message', 'messages']
+        fields = ['id', 'participants', 'created_at', 'latest_message', 'messages']
 
     def get_latest_message(self, obj):
         latest = obj.messages.order_by('-sent_at').first()
         return NestedMessageSerializer(latest).data if latest else None
 
 
+# 5. Serializer to create conversation (with participant validation)
 class ConversationCreateSerializer(serializers.ModelSerializer):
     participants = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -48,7 +54,7 @@ class ConversationCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants']
+        fields = ['id', 'participants']
 
     def validate_participants(self, value):
         if len(value) < 2:
@@ -62,12 +68,14 @@ class ConversationCreateSerializer(serializers.ModelSerializer):
         return conversation
 
 
+# 6. Serializer to create a message in a conversation (auth user must be participant)
 class MessageCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
-        fields = ['message_id', 'conversation', 'message_body']
+        fields = ['id', 'conversation', 'message_body']
 
     def validate(self, data):
-        if not data['conversation'].participants.filter(id=self.context['request'].user.id).exists():
+        user = self.context['request'].user
+        if not data['conversation'].participants.filter(id=user.id).exists():
             raise serializers.ValidationError("You are not a participant in this conversation.")
         return data

@@ -1,9 +1,7 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.response import Response
+# chats/views.py
+from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action
-
-from .models import Conversation, Message, User
+from .models import Conversation, Message
 from .serializers import (
     ConversationSerializer,
     ConversationCreateSerializer,
@@ -11,11 +9,14 @@ from .serializers import (
     MessageCreateSerializer
 )
 
-
 class ConversationViewSet(viewsets.ModelViewSet):
-    queryset = Conversation.objects.all()
+    """
+    ViewSet for handling Conversations with JWT authentication.
+    Users can only access conversations they participate in.
+    """
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['updated_at']
     ordering = ['-updated_at']
 
     def get_serializer_class(self):
@@ -27,14 +28,18 @@ class ConversationViewSet(viewsets.ModelViewSet):
         return Conversation.objects.filter(participants=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save()
-
+        conversation = serializer.save()
+        conversation.participants.add(self.request.user)
 
 class MessageViewSet(viewsets.ModelViewSet):
-    queryset = Message.objects.all()
+    """
+    ViewSet for handling Messages with JWT authentication.
+    Users can only access messages from conversations they participate in.
+    """
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.OrderingFilter]
-    ordering = ['sent_at']
+    ordering_fields = ['sent_at']
+    ordering = ['-sent_at']
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -42,7 +47,10 @@ class MessageViewSet(viewsets.ModelViewSet):
         return MessageSerializer
 
     def get_queryset(self):
-        return Message.objects.filter(conversation__participants=self.request.user)
+        return Message.objects.filter(
+            Q(conversation__participants=self.request.user) |
+            Q(sender=self.request.user)
+        ).distinct()
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
