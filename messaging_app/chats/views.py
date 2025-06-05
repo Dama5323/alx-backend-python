@@ -5,6 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from .models import Conversation, Message
 from .filters import MessageFilter
+from .pagination import MessagePagination 
 from .serializers import (
     ConversationSerializer,
     ConversationCreateSerializer,
@@ -45,7 +46,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     filterset_class = MessageFilter
-    pagination_class = PageNumberPagination
+    pagination_class = MessagePagination
     ordering_fields = ['sent_at']
     ordering = ['-sent_at']
 
