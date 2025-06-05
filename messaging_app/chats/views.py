@@ -12,7 +12,8 @@ from .serializers import (
     MessageSerializer,
     MessageCreateSerializer
 )
-from .permissions import IsParticipant  # Make sure this is the correct path
+from .permissions import IsParticipant 
+from .permissions import IsParticipantOfConversation
 
 
 class ConversationViewSet(viewsets.ModelViewSet):

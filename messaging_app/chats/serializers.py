@@ -29,6 +29,19 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ['id', 'conversation', 'sender', 'message_body', 'sent_at']
         read_only_fields = ['sender', 'sent_at']
 
+    def validate(self, data):
+        """
+        Additional validation to check if user is conversation participant
+        """
+        request = self.context.get('request')
+        conversation = data.get('conversation') or self.instance.conversation
+        
+        if not conversation.participants.filter(id=request.user.id).exists():
+            raise serializers.ValidationError(
+                "You must be a participant of the conversation"
+            )
+        return data
+
 
 # 4. Conversation Serializer with nested users/messages + latest message
 class ConversationSerializer(serializers.ModelSerializer):
