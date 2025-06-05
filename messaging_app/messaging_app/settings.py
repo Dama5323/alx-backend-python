@@ -111,9 +111,5 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-
-AUTH_USER_MODEL = 'chats.User'  
-
-# For production, you should also add:
-# CORS_ALLOW_ALL_ORIGINS = True  # Or configure specific origins
-# CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']  # For frontend
+#user model
+AUTH_USER_MODEL = 'chats.User'

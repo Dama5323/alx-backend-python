@@ -1,4 +1,5 @@
 # chats/views.py
+from django.db.models import Q
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from .models import Conversation, Message
@@ -8,13 +9,15 @@ from .serializers import (
     MessageSerializer,
     MessageCreateSerializer
 )
+from .auth import IsParticipant  # ✅ Custom permission
+
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for handling Conversations with JWT authentication.
     Users can only access conversations they participate in.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsParticipant]  # ✅ Add custom permission
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['updated_at']
     ordering = ['-updated_at']
@@ -36,7 +39,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     ViewSet for handling Messages with JWT authentication.
     Users can only access messages from conversations they participate in.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsParticipant]  # ✅ Add custom permission
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['sent_at']
     ordering = ['-sent_at']
@@ -54,3 +57,4 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
+
