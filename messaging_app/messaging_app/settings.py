@@ -122,3 +122,7 @@ SIMPLE_JWT = {
 
 #user model
 AUTH_USER_MODEL = 'chats.User'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
