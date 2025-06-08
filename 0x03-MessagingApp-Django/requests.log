@@ -1,10 +1,2 @@
-2025-06-08 06:46:36,531 - User: Anonymous - Path: /api/test - Method: GET
-2025-06-08 06:46:36,574 - Not Found: /api/test
-2025-06-08 06:48:12,783 - User: Anonymous - Path: /api/messages/ - Method: GET
-2025-06-08 06:48:12,785 - Unauthorized: /api/messages/
-2025-06-08 06:48:42,538 - User: Anonymous - Path: /admin/ - Method: GET
-2025-06-08 06:48:42,552 - User: Anonymous - Path: /admin/login/ - Method: GET
-2025-06-08 06:55:19,329 - User: Anonymous | Path: /admin/ | Method: GET | Status: 302
-2025-06-08 06:55:19,359 - User: Anonymous | Path: /admin/login/ | Method: GET | Status: 200
-2025-06-08 06:59:02,455 - User: Anonymous | IP: 127.0.0.1 | Path: /admin/ | Method: GET | Status: 302 | Size: 0 bytes
-2025-06-08 06:59:02,483 - User: Anonymous | IP: 127.0.0.1 | Path: /admin/login/ | Method: GET | Status: 200 | Size: 4173 bytes
+2025-06-08 08:07:31,654 - User: Anonymous | IP: 127.0.0.1 | Path: /admin/ | Method: GET | Status: 302 | Size: 0 bytes
+2025-06-08 08:07:31,690 - User: Anonymous | IP: 127.0.0.1 | Path: /admin/login/ | Method: GET | Status: 200 | Size: 4173 bytes
