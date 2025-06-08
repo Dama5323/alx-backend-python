@@ -1,3 +1,4 @@
+
 """
 Django settings for Django_Middleware_0x03.
 
@@ -44,7 +45,7 @@ MIDDLEWARE = [
     'chats.middleware.RequestLoggingMiddleware',
     'chats.middleware.RestrictAccessByTimeMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'chats.middleware.OffensiveLanguageMiddleware',
+    #'chats.middleware.OffensiveLanguageMiddleware',
     'chats.middleware.RolePermissionMiddleware',  
 ]
 

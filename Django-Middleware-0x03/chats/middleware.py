@@ -41,7 +41,7 @@ class RestrictAccessByTimeMiddleware:
         
         return self.get_response(request)
     
-    class OffensiveLanguageMiddleware:
+    class RequestLoggingMiddleware:
         def __init__(self, get_response):
             self.get_response = get_response
             self.ip_message_times = defaultdict(deque)
