@@ -34,7 +34,7 @@ class RestrictAccessByTimeMiddleware:
 
             if not (self.allowed_start <= current_time <= self.allowed_end):
                 return HttpResponseForbidden(
-                    "❌ Access to the messaging app is only allowed between 6PM and 9PM."
+                    "Access to the messaging app is only allowed between 6PM and 9PM."
                 )
         
         return self.get_response(request)
