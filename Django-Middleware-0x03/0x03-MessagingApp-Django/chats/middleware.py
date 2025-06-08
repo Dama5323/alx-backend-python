@@ -6,13 +6,11 @@ class RequestLoggingMiddleware:
         self.get_response = get_response
         self.logger = logging.getLogger('request')
         self.logger.setLevel(logging.INFO)
-        
-        if not self.logger.handlers:
-            handler = logging.FileHandler('requests.log')
-            handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
-            self.logger.addHandler(handler)
+        handler = logging.FileHandler('requests.log')
+        handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+        self.logger.addHandler(handler)
 
     def __call__(self, request):
-        user = request.user.username if request.user.is_authenticated else "Anonymous"
-        self.logger.info(f"User: {user} | Path: {request.path} | Method: {request.method}")
+        user = request.user.username if request.user.is_authenticated else 'Anonymous'
+        self.logger.info(f'User: {user} | Path: {request.path} | Method: {request.method}')
         return self.get_response(request)
