@@ -9,19 +9,24 @@ from collections import defaultdict, deque
 from django.http import JsonResponse
 
 
+from datetime import datetime
+from datetime import datetime
+
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-
+    
     def __call__(self, request):
-        timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-        user = request.user.username if request.user.is_authenticated else 'Anonymous'
-        path = request.path
-
-        logger.info(f"{timestamp} - User: {user} - Path: {path}")
+        user = "Anonymous"
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            user = request.user.username  # or request.user.email if you prefer
+        
+        log_entry = f"{datetime.now()} - User: {user} - Path: {request.path}\n"
+        
+        with open('requests.log', 'a') as log_file:
+            log_file.write(log_entry)
         
         return self.get_response(request)
-    
 
 class RestrictAccessByTimeMiddleware:
     def __init__(self, get_response):
@@ -82,22 +87,24 @@ class RestrictAccessByTimeMiddleware:
 class RolePermissionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-
+    
     def __call__(self, request):
-        return self.get_response(request)
-
+        response = self.get_response(request)
+        return response
+    
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if hasattr(view_func, 'role_required'):
-            required_roles = getattr(view_func, 'role_required')
-            
+        # Skip permission checks for admin URLs
+        if request.path.startswith('/admin/'):
+            return None
+        
+        # Your existing permission logic here
+        required_roles = getattr(view_func, 'required_roles', [])
+        if required_roles:
             if not request.user.is_authenticated:
                 return HttpResponseForbidden("Authentication required")
-                
-            # Check if user has any of the required roles
-            user_roles = getattr(request.user, 'roles', [])  # Adjust based on your user model
+            
+            user_roles = getattr(request.user, 'roles', [])
             if not any(role in required_roles for role in user_roles):
                 return HttpResponseForbidden("Insufficient permissions")
-            if not request.user.is_superuser and not request.user.is_staff:
-                return HttpResponseForbidden("Admin access required")
         
-        return self.get_response(request)
+        return None
