@@ -12,21 +12,25 @@ from django.http import JsonResponse
 from datetime import datetime
 from datetime import datetime
 
+# chats/middleware.py
+from datetime import datetime
+import logging
+
+logger = logging.getLogger('request_logger')
+
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-    
+
     def __call__(self, request):
-        user = "Anonymous"
-        if hasattr(request, 'user') and request.user.is_authenticated:
-            user = request.user.username  # or request.user.email if you prefer
+        # Get the user (anonymous or authenticated)
+        user = request.user.username if request.user.is_authenticated else "Anonymous"
         
-        log_entry = f"{datetime.now()} - User: {user} - Path: {request.path}\n"
+        # Log the request information
+        logger.info(f"{datetime.now()} - User: {user} - Path: {request.path}")
         
-        with open('requests.log', 'a') as log_file:
-            log_file.write(log_entry)
-        
-        return self.get_response(request)
+        response = self.get_response(request)
+        return response
 
 class RestrictAccessByTimeMiddleware:
     def __init__(self, get_response):
@@ -46,14 +50,14 @@ class RestrictAccessByTimeMiddleware:
         
         return self.get_response(request)
     
-    class RequestLoggingMiddleware:
+   # class RequestLoggingMiddleware:
         def __init__(self, get_response):
             self.get_response = get_response
             self.ip_message_times = defaultdict(deque)
             self.message_limit = 5
             self.time_window = 60  # seconds (1 minute)
 
-    def __call__(self, request):
+   # def __call__(self, request):
         if request.method == "POST" and request.path.startswith('/chat/'):
             ip = self.get_client_ip(request)
             now = time.time()
@@ -74,7 +78,7 @@ class RestrictAccessByTimeMiddleware:
 
         return self.get_response(request)
 
-    def get_client_ip(self, request):
+   # def get_client_ip(self, request):
         """Extract IP address from request."""
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
