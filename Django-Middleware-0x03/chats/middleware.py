@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime
 from django.http import HttpRequest,  HttpResponseForbidden
+import time
+from django.http import JsonResponse
 
 logger = logging.getLogger('request_logger')
 
@@ -31,3 +33,40 @@ class RestrictAccessByTimeMiddleware:
             return HttpResponseForbidden("Access to the chat is restricted at this time.")
 
         return self.get_response(request)
+    
+
+class OffensiveLanguageMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.message_log = {}  # IP: [(timestamp1), (timestamp2), ...]
+
+    def __call__(self, request):
+        # Only track POST requests to the chat endpoint
+        if request.method == 'POST' and request.path.startswith('/chats/messages'):
+            ip = self.get_client_ip(request)
+            now = time.time()
+            window = 60  # 60 seconds = 1 minute
+            max_requests = 5
+
+            # Clean up old timestamps
+            timestamps = self.message_log.get(ip, [])
+            timestamps = [ts for ts in timestamps if now - ts < window]
+            timestamps.append(now)
+
+            # Check if limit is exceeded
+            if len(timestamps) > max_requests:
+                return JsonResponse(
+                    {"error": "Too many messages sent. Try again in a minute."},
+                    status=429
+                )
+
+            self.message_log[ip] = timestamps
+
+        return self.get_response(request)
+
+    def get_client_ip(self, request):
+        """Get IP address from request headers"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
