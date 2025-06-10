@@ -139,17 +139,17 @@ AUTHENTICATION_BACKENDS = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {
-            'format': '%(message)s',
-        },
-    },
     'handlers': {
         'request_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'requests.log'),
+            'filename': 'requests.log',
             'formatter': 'simple',
+        },
+    },
+    'formatters': {
+        'simple': {
+            'format': '%(message)s'
         },
     },
     'loggers': {
