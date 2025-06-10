@@ -70,3 +70,25 @@ class OffensiveLanguageMiddleware:
         if x_forwarded_for:
             return x_forwarded_for.split(',')[0]
         return request.META.get('REMOTE_ADDR')
+    
+
+class RolePermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Only apply to protected paths (e.g., sending messages or modifying content)
+        protected_paths = ['/chats/messages/', '/chats/admin/']
+
+        if request.path in protected_paths:
+            # Assume role is stored in request headers for simplicity (e.g., sent via frontend)
+            user_role = request.headers.get('Role', '').lower()
+
+            if user_role not in ['admin', 'moderator']:
+                return JsonResponse(
+                    {"error": "Forbidden: Insufficient permissions"},
+                    status=403
+                )
+
+        return self.get_response(request)
+
