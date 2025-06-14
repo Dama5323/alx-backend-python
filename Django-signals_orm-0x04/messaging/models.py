@@ -4,24 +4,38 @@ from django.utils import timezone
 
 User = get_user_model()
 
+class UnreadMessagesManager(models.Manager):
+    pass
+
 class Message(models.Model):
     sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
     parent_message = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
     edited = models.BooleanField(default=False)
     edited_at = models.DateTimeField(null=True, blank=True)
     edited_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='edited_messages')
+
+    # Managers
+    objects = models.Manager()  # Default manager
+    unread = UnreadMessagesManager()  # Custom manager 
     
     class Meta:
         ordering = ['-timestamp']
         indexes = [
             models.Index(fields=['parent_message']),
         ]
+
     
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver}"
+    
+    def mark_as_read(self):
+        """Helper method to mark a message as read"""
+        self.read = True
+        self.save(update_fields=['read'])
     
     @property
     def is_reply(self):
@@ -56,3 +70,14 @@ class Notification(models.Model):
     
     def __str__(self):
         return f"Notification for {self.user} about message #{self.message.id}"
+    
+class UnreadMessagesManager(models.Manager):
+    def for_user(self, user):
+        """Returns unread messages for a specific user"""
+        return self.get_queryset().filter(
+            receiver=user,
+            read=False
+        ).select_related('sender').only(
+            'id', 'content', 'timestamp', 'sender__username'
+        )
+    
