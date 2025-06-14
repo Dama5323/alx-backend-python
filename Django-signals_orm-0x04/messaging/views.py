@@ -1,13 +1,11 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Message, MessageHistory
-from django.shortcuts import redirect
 from django.contrib.auth import logout
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch
-
+from .models import Message, MessageHistory
 
 @login_required
 def message_history(request, message_id):
@@ -25,7 +23,6 @@ def message_history(request, message_id):
         'history': history
     })
 
-
 @login_required
 @require_POST
 def delete_user(request):
@@ -35,8 +32,9 @@ def delete_user(request):
     user.delete()  # This will trigger the post_delete signal
     
     messages.success(request, 'Your account has been permanently deleted.')
-    return redirect('home')  # Redirect to home page
+    return redirect('home')
 
+@login_required
 def message_thread(request, message_id):
     # Get the root message with optimized queries
     message = get_object_or_404(
@@ -46,27 +44,27 @@ def message_thread(request, message_id):
             Prefetch('replies',
                 queryset=Message.objects
                     .select_related('sender')
+                    .filter(sender=request.user)  # Filter by current user
                     .order_by('timestamp')
             )
         ),
-        pk=message_id
+        pk=message_id,
+        sender=request.user  # Ensure user owns the message
     )
-
-def get_replies(message, depth=0):
-        replies = []
-        for reply in message.replies.all():
-            replies.append({
-                'message': reply,
-                'depth': depth + 1,
-                'replies': get_replies(reply, depth + 1)
-            })
-        return replies
     
-        thread = {
+    # Get all replies in the thread (recursive)
+    def get_all_replies(message):
+        return Message.objects.filter(
+            parent_message=message
+        ).select_related('sender').prefetch_related(
+            Prefetch('replies', queryset=Message.objects.select_related('sender'))
+        )
+    
+    replies = get_all_replies(message)
+    
+    context = {
         'message': message,
-        'replies': get_replies(message)
+        'replies': replies
     }
     
-        return render(request, 'messaging/message_thread.html', {
-        'thread': thread
-    })
+    return render(request, 'messaging/message_thread.html', context)

@@ -16,9 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from messaging.views import delete_user
+from messaging.views import delete_user, message_thread 
 
 urlpatterns = [
     path('delete-account/', delete_user, name='delete_account'),
     path('admin/', admin.site.urls),
+    path('thread/<int:message_id>/', message_thread, name='message_thread'),
 ]
