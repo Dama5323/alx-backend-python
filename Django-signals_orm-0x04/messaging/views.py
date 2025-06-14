@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch
 from .models import Message, MessageHistory
+from django.views.decorators.cache import cache_page
 
 @login_required
 def message_history(request, message_id):
@@ -79,4 +80,19 @@ def inbox(request):
     
     return render(request, 'messaging/inbox.html', {
         'messages': unread_messages
+    })
+
+
+@login_required
+@cache_page(60)  # 60 second cache timeout
+def message_list(request):
+    """Cached view showing message list"""
+    messages = Message.objects.filter(
+        receiver=request.user
+    ).select_related('sender').only(
+        'id', 'content', 'timestamp', 'sender__username'
+    ).order_by('-timestamp')
+    
+    return render(request, 'chats/message_list.html', {
+        'messages': messages
     })
