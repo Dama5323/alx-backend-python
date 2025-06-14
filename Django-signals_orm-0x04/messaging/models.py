@@ -15,9 +15,21 @@ class Message(models.Model):
     
     class Meta:
         ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['parent_message']),
+        ]
     
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver}"
+    
+    @property
+    def is_reply(self):
+        return self.parent_message is not None
+    
+    def get_thread(self):
+        """Returns the root message of the thread"""
+        return self.parent_message.get_thread() if self.is_reply else self
+    
     
 class MessageHistory(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')

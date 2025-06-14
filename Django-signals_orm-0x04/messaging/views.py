@@ -6,6 +6,7 @@ from django.contrib.auth import logout
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
 
 
 @login_required
@@ -35,3 +36,37 @@ def delete_user(request):
     
     messages.success(request, 'Your account has been permanently deleted.')
     return redirect('home')  # Redirect to home page
+
+def message_thread(request, message_id):
+    # Get the root message with optimized queries
+    message = get_object_or_404(
+        Message.objects
+        .select_related('sender', 'receiver')
+        .prefetch_related(
+            Prefetch('replies',
+                queryset=Message.objects
+                    .select_related('sender')
+                    .order_by('timestamp')
+            )
+        ),
+        pk=message_id
+    )
+
+def get_replies(message, depth=0):
+        replies = []
+        for reply in message.replies.all():
+            replies.append({
+                'message': reply,
+                'depth': depth + 1,
+                'replies': get_replies(reply, depth + 1)
+            })
+        return replies
+    
+        thread = {
+        'message': message,
+        'replies': get_replies(message)
+    }
+    
+        return render(request, 'messaging/message_thread.html', {
+        'thread': thread
+    })
