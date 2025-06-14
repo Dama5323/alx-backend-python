@@ -1,6 +1,12 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Message, MessageHistory
+from django.shortcuts import redirect
+from django.contrib.auth import logout
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from django.contrib.auth import get_user_model
+
 
 @login_required
 def message_history(request, message_id):
@@ -17,3 +23,15 @@ def message_history(request, message_id):
         'message': message,
         'history': history
     })
+
+
+@login_required
+@require_POST
+def delete_user(request):
+    """View to delete user account and all related data"""
+    user = request.user
+    logout(request)  # Logout before deletion
+    user.delete()  # This will trigger the post_delete signal
+    
+    messages.success(request, 'Your account has been permanently deleted.')
+    return redirect('home')  # Redirect to home page
