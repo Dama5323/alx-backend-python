@@ -2,8 +2,7 @@ from django.apps import AppConfig
 
 class MessagingConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'messaging'
+    name = 'messaging'  # Must match your directory name exactly
 
     def ready(self):
-        # Import signals to register them
         import messaging.signals
