@@ -1,0 +1,24 @@
+#!/bin/bash
+
+echo "📦 Scaling Django deployment to 3 replicas..."
+kubectl scale deployment django-messaging-app --replicas=3
+
+echo "⏳ Waiting for pods to be ready..."
+sleep 10
+
+echo "🔍 Checking running pods..."
+kubectl get pods
+
+echo "🌐 Port-forwarding service to localhost:8000..."
+kubectl port-forward svc/django-messaging-service 8000:8000 &
+PORT_PID=$!
+sleep 5
+
+echo "🚀 Running load test using wrk..."
+wrk -t2 -c50 -d10s http://localhost:8000/
+
+echo "📊 Checking resource usage..."
+kubectl top pods
+
+echo "🧹 Cleaning up port-forward process..."
+kill $PORT_PID
