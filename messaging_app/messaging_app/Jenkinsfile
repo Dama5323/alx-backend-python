@@ -4,8 +4,8 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                echo 'Cloning repository...'
-                // Explicit git command for checker
+                echo 'Cloning repository using credentials...'
+                git url: 'https://github.com/Dama5323/alx-backend-python.git', branch: 'main', credentialsId: 'github-creds'
                 sh 'git branch'
             }
         }
