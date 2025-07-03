@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.10'
+        }
+    }
 
     stages {
         stage('Clone Repository') {
@@ -13,7 +17,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo 'Installing dependencies...'
-                sh 'pip3 install -r messaging_app/requirements.txt'
+                sh 'pip install -r messaging_app/requirements.txt'
             }
         }
 
