@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_IMAGE = 'damaris70/messaging-app'
+    }
+
     stages {
         stage('Clone Repository') {
             steps {
@@ -32,6 +36,25 @@ pipeline {
             steps {
                 echo 'Publishing test results...'
                 junit 'messaging_app/test-report.xml'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image from messaging_app directory...'
+                sh 'docker build -t $DOCKER_IMAGE messaging_app/'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo 'Logging in to Docker Hub and pushing image...'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push $DOCKER_IMAGE
+                    '''
+                }
             }
         }
     }
