@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: django
-          image: your-django-image:latest
+          image: image: damaris70/messaging_app:2.0
           ports:
             - containerPort: 8000

@@ -1,0 +1,7 @@
+Django>=4.2,<5.0
+gunicorn>=21.2.0
+djangorestframework>=3.14.0
+djangorestframework-simplejwt
+django-filter
+drf-nested-routers
+Pillow

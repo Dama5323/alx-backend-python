@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    tools {
+        python 'Python 3' // Ensure Python 3 is configured in Jenkins
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'github-creds', url: 'https://github.com/USERNAME/alx-backend-python.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r messaging_app/requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'pytest messaging_app/tests --junitxml=report.xml'
+            }
+        }
+
+        stage('Publish Report') {
+            steps {
+                junit 'report.xml'
+            }
+        }
+    }
+
+    triggers {
+        // No automatic triggers: manual execution only
+    }
+}
